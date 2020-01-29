@@ -1,4 +1,4 @@
 FROM alpine:latest
 
-ADD admission-webhook-example /admission-webhook-example
-ENTRYPOINT ["./admission-webhook-example"]
+ADD spot-instance-webhook /spot-instance-webhook
+ENTRYPOINT ["./spot-instance-webhook"]
