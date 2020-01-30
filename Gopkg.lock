@@ -13,14 +13,6 @@
   revision = "a8371794149d1d95f1e846744b05c87f2f825e5a"
 
 [[projects]]
-  digest = "1:2cd7915ab26ede7d95b8749e6b1f933f1c6d5398030684e6505940a10f31cfda"
-  name = "github.com/ghodss/yaml"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "0ca9ea5df5451ffdf184b4428c902747c2c11cd7"
-  version = "v1.0.0"
-
-[[projects]]
   digest = "1:582e25eccee928dc12416ea4c23b6dae8f3b5687730632aa1473ebebe80a2359"
   name = "github.com/gogo/protobuf"
   packages = [
@@ -48,11 +40,12 @@
   version = "v1.1.0"
 
 [[projects]]
-  digest = "1:bb3cc4c1b21ea18cfa4e3e47440fc74d316ab25b0cf42927e8c1274917bd9891"
+  digest = "1:7cd2924a44ecf80a319cfa2378529fabd348d011b739fb4eccc565f65e3296c4"
   name = "github.com/json-iterator/go"
   packages = ["."]
   pruneopts = "UT"
-  revision = "f2b4162afba35581b6d4a50d3b8f34e33c144682"
+  revision = "acfec88f7a0d5140ace3dcdbee10184e3684a9e1"
+  version = "v1.1.9"
 
 [[projects]]
   digest = "1:33422d238f147d247752996a26574ac48dcf472976eda7f5134015f06bf16563"
@@ -77,14 +70,6 @@
   pruneopts = "UT"
   revision = "279bed98673dd5bef374d3b6e4b09e2af76183bf"
   version = "v1.0.0-rc1"
-
-[[projects]]
-  digest = "1:524b71991fc7d9246cc7dc2d9e0886ccb97648091c63e30eef619e6862c955dd"
-  name = "github.com/spf13/pflag"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "2e9d26c8c37aae03e3f9d4e90b7116f5accb7cab"
-  version = "v1.0.5"
 
 [[projects]]
   branch = "master"
@@ -141,8 +126,8 @@
   version = "v2.2.8"
 
 [[projects]]
-  branch = "release-1.10"
-  digest = "1:0f1f78b09c0dba9335c5378adab094882b1165857e7e6647bda9cce8c0cbda0f"
+  branch = "release-1.14"
+  digest = "1:0fbc60209ae7ec8488de50dac3c9f2bcd5b26bc5ada4d9b0a9b69b5515918524"
   name = "k8s.io/api"
   packages = [
     "admission/v1beta1",
@@ -152,24 +137,17 @@
     "core/v1",
   ]
   pruneopts = "UT"
-  revision = "c89978d5f86d7427bef2fc7752732c8c60b1d188"
+  revision = "159aefb8556bb8ed4be7631461d1558546d304db"
 
 [[projects]]
-  branch = "release-1.10"
-  digest = "1:b46a162d7c7e9117ae2dd9a73ee4dc2181ad9ea9d505fd7c5eb63c96211dc9dd"
-  name = "k8s.io/apiextensions-apiserver"
-  packages = ["pkg/features"]
-  pruneopts = "UT"
-  revision = "f0729a5940c5414a9b9da2f18ba8d5c4b559ec9a"
-
-[[projects]]
-  branch = "release-1.10"
-  digest = "1:9fb20b5c09516c56101042b05197f42dd2e3ee0cff9b53b0256e459a8b8d6a11"
+  branch = "release-1.14"
+  digest = "1:a199d6cdb2f643dc1841d13e2c9bdc6309aba5852706385935cf336a4dc90ad8"
   name = "k8s.io/apimachinery"
   packages = [
     "pkg/api/resource",
     "pkg/apis/meta/internalversion",
     "pkg/apis/meta/v1",
+    "pkg/apis/meta/v1/unstructured",
     "pkg/apis/meta/v1beta1",
     "pkg/conversion",
     "pkg/conversion/queryparams",
@@ -188,46 +166,56 @@
     "pkg/util/framer",
     "pkg/util/intstr",
     "pkg/util/json",
+    "pkg/util/naming",
     "pkg/util/net",
     "pkg/util/runtime",
     "pkg/util/sets",
     "pkg/util/validation",
     "pkg/util/validation/field",
-    "pkg/util/wait",
     "pkg/util/yaml",
     "pkg/watch",
     "third_party/forked/golang/reflect",
   ]
   pruneopts = "UT"
-  revision = "d49e237a2683fa6dc43a86c7b1b766e0219fb6e7"
+  revision = "c5d2f014d689246b84637774317fa0288dd3129b"
 
 [[projects]]
-  branch = "release-1.10"
-  digest = "1:69f7f9af51c404e8a61f3c86e7c3c73fecde09f188c8642072a9c09036c8762d"
-  name = "k8s.io/apiserver"
-  packages = [
-    "pkg/features",
-    "pkg/util/feature",
-  ]
+  digest = "1:93e82f25d75aba18436ad1ac042cb49493f096011f2541075721ed6f9e05c044"
+  name = "k8s.io/klog"
+  packages = ["."]
   pruneopts = "UT"
-  revision = "30d6a91f580b7a2a240dccebc1a35bff2a6940f6"
+  revision = "2ca9ad30301bf30a8a6e0fa2110db6b8df699a91"
+  version = "v1.0.0"
 
 [[projects]]
-  branch = "release-1.10"
-  digest = "1:8f5236728f9d93cc99665d78be131190f5dda4c43e21a569d7b1c185b03699b1"
+  branch = "release-1.14"
+  digest = "1:c695b6fa257a46597d8e4bcd9bd3d5f31f16fc3b9914a72c4c78f1e8273e3d52"
   name = "k8s.io/kubernetes"
   packages = [
+    "pkg/apis/apps",
     "pkg/apis/autoscaling",
     "pkg/apis/core",
     "pkg/apis/core/v1",
-    "pkg/apis/extensions",
-    "pkg/apis/networking",
-    "pkg/features",
     "pkg/util/parsers",
-    "pkg/util/pointer",
   ]
   pruneopts = "UT"
-  revision = "f170ef66340f6355d331ed90902574ff0532a20a"
+  revision = "c8b135d0b49c44554ed5b78878f15f09cab350b6"
+
+[[projects]]
+  branch = "master"
+  digest = "1:533745b9452e27599b73ffa11c5248d44116e6d92b325fd7f400abab761187b9"
+  name = "k8s.io/utils"
+  packages = ["pointer"]
+  pruneopts = "UT"
+  revision = "861946025e3491219eaccb1bf693e23df70c2fa8"
+
+[[projects]]
+  digest = "1:7719608fe0b52a4ece56c2dde37bedd95b938677d1ab0f84b8a7852e4c59f849"
+  name = "sigs.k8s.io/yaml"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "fd68e9863619f6ec2fdd8625fe1f02e7c877e480"
+  version = "v1.1.0"
 
 [solve-meta]
   analyzer-name = "dep"

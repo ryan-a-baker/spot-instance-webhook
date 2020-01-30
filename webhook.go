@@ -139,6 +139,10 @@ func validationRequired(ignoredList []string, metadata *metav1.ObjectMeta) bool 
 
 func updateAnnotation(target map[string]string, added map[string]string) (patch []patchOperation) {
 	for key, value := range added {
+		glog.Infof("Target: %v", target)
+		glog.Infof("Key: %v", key)
+		glog.Infof("Value: %v", value)
+		glog.Infof("Target index: %v", target[key])
 		if target == nil || target[key] == "" {
 			target = map[string]string{}
 			patch = append(patch, patchOperation{
@@ -151,13 +155,11 @@ func updateAnnotation(target map[string]string, added map[string]string) (patch 
 			// Need to figure out how to check if toleration exists,
 			// and if not, run this first
 			patch = append(patch, patchOperation{
-				Op:   "add",
-				Path: "/spec/template/spec/tolerations",
-				//map[string]map[string]int
-				//Value: a,
+				Op:    "add",
+				Path:  "/spec/template/spec/tolerations",
 				Value: []string{},
 			})
-			glog.Infof("Patch2: %v", patch)
+			// glog.Infof("Patch2: %v", patch)
 			// This is appended only after we determine that the
 			// toleration exists
 			patch = append(patch, patchOperation{
@@ -208,72 +210,6 @@ func createPatch(availableAnnotations map[string]string, annotations map[string]
 	return json.Marshal(patch)
 }
 
-// validate deployments and services
-func (whsvr *WebhookServer) validate(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
-	req := ar.Request
-	var (
-		availableLabels                 map[string]string
-		objectMeta                      *metav1.ObjectMeta
-		resourceNamespace, resourceName string
-	)
-
-	glog.Infof("AdmissionReview for Kind=%v, Namespace=%v Name=%v (%v) UID=%v patchOperation=%v UserInfo=%v",
-		req.Kind, req.Namespace, req.Name, resourceName, req.UID, req.Operation, req.UserInfo)
-
-	switch req.Kind.Kind {
-	case "Deployment":
-		var deployment appsv1.Deployment
-		if err := json.Unmarshal(req.Object.Raw, &deployment); err != nil {
-			glog.Errorf("Could not unmarshal raw object: %v", err)
-			return &v1beta1.AdmissionResponse{
-				Result: &metav1.Status{
-					Message: err.Error(),
-				},
-			}
-		}
-		resourceName, resourceNamespace, objectMeta = deployment.Name, deployment.Namespace, &deployment.ObjectMeta
-		availableLabels = deployment.Labels
-	case "Service":
-		var service corev1.Service
-		if err := json.Unmarshal(req.Object.Raw, &service); err != nil {
-			glog.Errorf("Could not unmarshal raw object: %v", err)
-			return &v1beta1.AdmissionResponse{
-				Result: &metav1.Status{
-					Message: err.Error(),
-				},
-			}
-		}
-		resourceName, resourceNamespace, objectMeta = service.Name, service.Namespace, &service.ObjectMeta
-		availableLabels = service.Labels
-	}
-
-	if !validationRequired(ignoredNamespaces, objectMeta) {
-		glog.Infof("Skipping validation for %s/%s due to policy check", resourceNamespace, resourceName)
-		return &v1beta1.AdmissionResponse{
-			Allowed: true,
-		}
-	}
-
-	allowed := true
-	var result *metav1.Status
-	glog.Info("available labels:", availableLabels)
-	glog.Info("required labels", requiredLabels)
-	for _, rl := range requiredLabels {
-		if _, ok := availableLabels[rl]; !ok {
-			allowed = false
-			result = &metav1.Status{
-				Reason: "required labels are not set",
-			}
-			break
-		}
-	}
-
-	return &v1beta1.AdmissionResponse{
-		Allowed: allowed,
-		Result:  result,
-	}
-}
-
 // main mutation process
 func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	req := ar.Request
@@ -299,6 +235,19 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 		}
 		resourceName, resourceNamespace, objectMeta = deployment.Name, deployment.Namespace, &deployment.ObjectMeta
 		availableLabels = deployment.Labels
+		glog.Infof("Labels: %v", availableLabels)
+		fmt.Println("map:", availableLabels)
+		fmt.Println("deployment:", deployment)
+		fmt.Println("tolerations:", deployment.Spec.Template.Spec.Tolerations)
+		if deployment.Spec.Template.Spec.Tolerations == nil {
+			glog.Errorf("Toleration was nil")
+		}
+		if len(deployment.Spec.Template.Spec.Tolerations) == 0 {
+			glog.Errorf("Toleration was empty")
+		} else {
+			glog.Errorf("Toleration was not empty")
+		}
+	// TODO:  Chaange this to stateful set
 	case "Service":
 		var service corev1.Service
 		if err := json.Unmarshal(req.Object.Raw, &service); err != nil {
@@ -321,6 +270,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	}
 
 	annotations := map[string]string{admissionWebhookAnnotationStatusKey: "mutated"}
+	// Update right here to pass tolerations and node selectors
 	patchBytes, err := createPatch(availableAnnotations, annotations, availableLabels, addLabels)
 	if err != nil {
 		return &v1beta1.AdmissionResponse{
@@ -376,8 +326,6 @@ func (whsvr *WebhookServer) serve(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(r.URL.Path)
 		if r.URL.Path == "/mutate" {
 			admissionResponse = whsvr.mutate(&ar)
-		} else if r.URL.Path == "/validate" {
-			admissionResponse = whsvr.validate(&ar)
 		}
 	}
 
