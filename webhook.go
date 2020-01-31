@@ -123,7 +123,7 @@ func validationRequired(ignoredList []string, metadata *metav1.ObjectMeta) bool 
 }
 
 // This may just be able to be Tolerations
-func updateAnnotation(target map[string]string, added map[string]string, availableTolerations []corev1.Toleration) (patch []patchOperation) {
+func updateTolerations(target map[string]string, added map[string]string, availableTolerations []corev1.Toleration) (patch []patchOperation) {
 	for key, value := range added {
 		if target == nil || target[key] == "" {
 			target = map[string]string{}
@@ -169,7 +169,7 @@ func updateAnnotation(target map[string]string, added map[string]string, availab
 func createPatch(availableAnnotations map[string]string, annotations map[string]string, availableLabels map[string]string, availableTolerations []corev1.Toleration) ([]byte, error) {
 	var patch []patchOperation
 
-	patch = append(patch, updateAnnotation(availableAnnotations, annotations, availableTolerations)...)
+	patch = append(patch, updateTolerations(availableAnnotations, annotations, availableTolerations)...)
 
 	return json.Marshal(patch)
 }
