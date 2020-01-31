@@ -32,22 +32,6 @@ var (
 		metav1.NamespaceSystem,
 		metav1.NamespacePublic,
 	}
-	requiredLabels = []string{
-		nameLabel,
-		instanceLabel,
-		versionLabel,
-		componentLabel,
-		partOfLabel,
-		managedByLabel,
-	}
-	addLabels = map[string]string{
-		nameLabel:      NA,
-		instanceLabel:  NA,
-		versionLabel:   NA,
-		componentLabel: NA,
-		partOfLabel:    NA,
-		managedByLabel: NA,
-	}
 )
 
 const (
@@ -115,6 +99,7 @@ func admissionRequired(ignoredList []string, admissionAnnotationKey string, meta
 	return required
 }
 
+// TODO:  Check if the toleration/nodeSelector is already on the deployment
 func mutationRequired(ignoredList []string, metadata *metav1.ObjectMeta) bool {
 	required := admissionRequired(ignoredList, admissionWebhookAnnotationMutateKey, metadata)
 	annotations := metadata.GetAnnotations()
@@ -151,7 +136,7 @@ func updateAnnotation(target map[string]string, added map[string]string, availab
 			})
 
 			if availableTolerations == nil {
-				glog.Infof("Toleration did not exist, lets create one")
+				glog.Infof("Tolerations do not exist, patching empty tolerations")
 				patch = append(patch, patchOperation{
 					Op:    "add",
 					Path:  "/spec/template/spec/tolerations",
@@ -166,7 +151,7 @@ func updateAnnotation(target map[string]string, added map[string]string, availab
 				Value: map[string]string{
 					"key":      "spot",
 					"operator": "Equal",
-					"value":    "true",
+					"value":    `true`,
 					"effect":   "NoSchedule",
 				},
 			})
@@ -181,26 +166,10 @@ func updateAnnotation(target map[string]string, added map[string]string, availab
 	return patch
 }
 
-func updateLabels(target map[string]string, added map[string]string) (patch []patchOperation) {
-	values := make(map[string]string)
-	for key, value := range added {
-		if target == nil || target[key] == "" {
-			values[key] = value
-		}
-	}
-	patch = append(patch, patchOperation{
-		Op:    "add",
-		Path:  "/metadata/labels",
-		Value: values,
-	})
-	return patch
-}
-
-func createPatch(availableAnnotations map[string]string, annotations map[string]string, availableLabels map[string]string, labels map[string]string, availableTolerations []corev1.Toleration) ([]byte, error) {
+func createPatch(availableAnnotations map[string]string, annotations map[string]string, availableLabels map[string]string, availableTolerations []corev1.Toleration) ([]byte, error) {
 	var patch []patchOperation
 
 	patch = append(patch, updateAnnotation(availableAnnotations, annotations, availableTolerations)...)
-	patch = append(patch, updateLabels(availableLabels, labels)...)
 
 	return json.Marshal(patch)
 }
@@ -255,8 +224,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	}
 
 	annotations := map[string]string{admissionWebhookAnnotationStatusKey: "mutated"}
-	// TODO: Update right here to pass tolerations and node selectors
-	patchBytes, err := createPatch(availableAnnotations, annotations, availableLabels, addLabels, availableTolerations)
+	patchBytes, err := createPatch(availableAnnotations, annotations, availableLabels, availableTolerations)
 	if err != nil {
 		return &v1beta1.AdmissionResponse{
 			Result: &metav1.Status{
