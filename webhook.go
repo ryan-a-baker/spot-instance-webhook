@@ -140,10 +140,6 @@ func validationRequired(ignoredList []string, metadata *metav1.ObjectMeta) bool 
 // This may just be able to be Tolerations
 func updateAnnotation(target map[string]string, added map[string]string, availableTolerations []corev1.Toleration) (patch []patchOperation) {
 	for key, value := range added {
-		glog.Infof("Target: %v", target)
-		glog.Infof("Key: %v", key)
-		glog.Infof("Value: %v", value)
-		glog.Infof("Target index: %v", target[key])
 		if target == nil || target[key] == "" {
 			target = map[string]string{}
 			patch = append(patch, patchOperation{
@@ -153,23 +149,19 @@ func updateAnnotation(target map[string]string, added map[string]string, availab
 					"spot": "true",
 				},
 			})
-			// Need to figure out how to check if toleration exists,
-			// and if not, run this first
+
 			if availableTolerations == nil {
-				glog.Errorf("Toleration did not exist, lets create one")
+				glog.Infof("Toleration did not exist, lets create one")
 				patch = append(patch, patchOperation{
 					Op:    "add",
 					Path:  "/spec/template/spec/tolerations",
 					Value: []string{},
 				})
 			}
-			// glog.Infof("Patch2: %v", patch)
 			// This is appended only after we determine that the
 			// toleration exists
 			patch = append(patch, patchOperation{
-				Op: "add",
-				// works with tolerations already set
-				//Path: "/spec/template/spec/tolerations/0",
+				Op:   "add",
 				Path: "/spec/template/spec/tolerations/-",
 				Value: map[string]string{
 					"key":      "spot",
@@ -178,7 +170,6 @@ func updateAnnotation(target map[string]string, added map[string]string, availab
 					"effect":   "NoSchedule",
 				},
 			})
-			glog.Infof("Patch3: %v", patch)
 		} else {
 			patch = append(patch, patchOperation{
 				Op:    "replace",
@@ -207,15 +198,6 @@ func updateLabels(target map[string]string, added map[string]string) (patch []pa
 
 func createPatch(availableAnnotations map[string]string, annotations map[string]string, availableLabels map[string]string, labels map[string]string, availableTolerations []corev1.Toleration) ([]byte, error) {
 	var patch []patchOperation
-
-	if availableTolerations == nil {
-		glog.Errorf("Toleration 2 was nil")
-	}
-	if len(availableTolerations) == 0 {
-		glog.Errorf("Toleration 2 was empty")
-	} else {
-		glog.Errorf("Toleration 2 was not empty")
-	}
 
 	patch = append(patch, updateAnnotation(availableAnnotations, annotations, availableTolerations)...)
 	patch = append(patch, updateLabels(availableLabels, labels)...)
@@ -249,18 +231,6 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 		}
 		resourceName, resourceNamespace, objectMeta = deployment.Name, deployment.Namespace, &deployment.ObjectMeta
 		availableLabels = deployment.Labels
-		glog.Infof("Labels: %v", availableLabels)
-		fmt.Println("map:", availableLabels)
-		fmt.Println("deployment:", deployment)
-		fmt.Println("tolerations:", deployment.Spec.Template.Spec.Tolerations)
-		if deployment.Spec.Template.Spec.Tolerations == nil {
-			glog.Errorf("Toleration was nil")
-		}
-		if len(deployment.Spec.Template.Spec.Tolerations) == 0 {
-			glog.Errorf("Toleration was empty")
-		} else {
-			glog.Errorf("Toleration was not empty")
-		}
 		availableTolerations = deployment.Spec.Template.Spec.Tolerations
 	// TODO:  Chaange this to stateful set
 	case "Service":
