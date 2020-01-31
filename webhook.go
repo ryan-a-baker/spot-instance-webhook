@@ -137,7 +137,8 @@ func validationRequired(ignoredList []string, metadata *metav1.ObjectMeta) bool 
 	return required
 }
 
-func updateAnnotation(target map[string]string, added map[string]string) (patch []patchOperation) {
+// This may just be able to be Tolerations
+func updateAnnotation(target map[string]string, added map[string]string, availableTolerations []corev1.Toleration) (patch []patchOperation) {
 	for key, value := range added {
 		glog.Infof("Target: %v", target)
 		glog.Infof("Key: %v", key)
@@ -154,11 +155,14 @@ func updateAnnotation(target map[string]string, added map[string]string) (patch 
 			})
 			// Need to figure out how to check if toleration exists,
 			// and if not, run this first
-			patch = append(patch, patchOperation{
-				Op:    "add",
-				Path:  "/spec/template/spec/tolerations",
-				Value: []string{},
-			})
+			if availableTolerations == nil {
+				glog.Errorf("Toleration did not exist, lets create one")
+				patch = append(patch, patchOperation{
+					Op:    "add",
+					Path:  "/spec/template/spec/tolerations",
+					Value: []string{},
+				})
+			}
 			// glog.Infof("Patch2: %v", patch)
 			// This is appended only after we determine that the
 			// toleration exists
@@ -201,10 +205,19 @@ func updateLabels(target map[string]string, added map[string]string) (patch []pa
 	return patch
 }
 
-func createPatch(availableAnnotations map[string]string, annotations map[string]string, availableLabels map[string]string, labels map[string]string) ([]byte, error) {
+func createPatch(availableAnnotations map[string]string, annotations map[string]string, availableLabels map[string]string, labels map[string]string, availableTolerations []corev1.Toleration) ([]byte, error) {
 	var patch []patchOperation
 
-	patch = append(patch, updateAnnotation(availableAnnotations, annotations)...)
+	if availableTolerations == nil {
+		glog.Errorf("Toleration 2 was nil")
+	}
+	if len(availableTolerations) == 0 {
+		glog.Errorf("Toleration 2 was empty")
+	} else {
+		glog.Errorf("Toleration 2 was not empty")
+	}
+
+	patch = append(patch, updateAnnotation(availableAnnotations, annotations, availableTolerations)...)
 	patch = append(patch, updateLabels(availableLabels, labels)...)
 
 	return json.Marshal(patch)
@@ -215,6 +228,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	req := ar.Request
 	var (
 		availableLabels, availableAnnotations map[string]string
+		availableTolerations                  []corev1.Toleration
 		objectMeta                            *metav1.ObjectMeta
 		resourceNamespace, resourceName       string
 	)
@@ -247,6 +261,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 		} else {
 			glog.Errorf("Toleration was not empty")
 		}
+		availableTolerations = deployment.Spec.Template.Spec.Tolerations
 	// TODO:  Chaange this to stateful set
 	case "Service":
 		var service corev1.Service
@@ -271,7 +286,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 
 	annotations := map[string]string{admissionWebhookAnnotationStatusKey: "mutated"}
 	// TODO: Update right here to pass tolerations and node selectors
-	patchBytes, err := createPatch(availableAnnotations, annotations, availableLabels, addLabels)
+	patchBytes, err := createPatch(availableAnnotations, annotations, availableLabels, addLabels, availableTolerations)
 	if err != nil {
 		return &v1beta1.AdmissionResponse{
 			Result: &metav1.Status{
