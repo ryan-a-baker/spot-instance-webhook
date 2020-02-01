@@ -161,40 +161,6 @@ func updateTolerations(target map[string]string, added map[string]string, existi
 			},
 		})
 	}
-	// for key, value := range added {
-	// 	if target == nil || target[key] == "" {
-	// 		target = map[string]string{}
-	// 		patch = append(patch, patchOperation{
-	// 			Op:   "add",
-	// 			Path: "/spec/template/spec/nodeSelector",
-	// 			Value: map[string]string{
-	// 				"spot": "true",
-	// 			},
-	// 		})
-
-	// 		var test1toleration = corev1.Toleration{
-	// 			Key:      "test",
-	// 			Value:    "true",
-	// 			Operator: "Equal",
-	// 			Effect:   "NoSchedule",
-	// 		}
-
-	// 		var test2toleration = corev1.Toleration{
-	// 			Key:      "test",
-	// 			Value:    "true",
-	// 			Operator: "Equal",
-	// 			Effect:   "NoSchedule",
-	// 		}
-
-	// 		glog.Infof("Testing if toleration matches: %v ", test1toleration.MatchToleration(&test2toleration))
-	// 	} else {
-	// 		patch = append(patch, patchOperation{
-	// 			Op:    "replace",
-	// 			Path:  "/metadata/annotations/" + key,
-	// 			Value: value,
-	// 		})
-	// 	}
-	// }
 	return patch
 }
 
