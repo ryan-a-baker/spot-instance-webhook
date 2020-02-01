@@ -161,7 +161,6 @@ func updateTolerations(target map[string]string, added map[string]string, existi
 			},
 		})
 	}
-
 	// for key, value := range added {
 	// 	if target == nil || target[key] == "" {
 	// 		target = map[string]string{}
@@ -199,10 +198,32 @@ func updateTolerations(target map[string]string, added map[string]string, existi
 	return patch
 }
 
-func createPatch(availableAnnotations map[string]string, annotations map[string]string, availableLabels map[string]string, existingTolerations []corev1.Toleration) ([]byte, error) {
+func updateNodeSelector(existingNodeSelector map[string]string) (patch []patchOperation) {
+	if existingNodeSelector == nil {
+		glog.Infof("No node selector defined, add")
+		patch = append(patch, patchOperation{
+			Op:   "add",
+			Path: "/spec/template/spec/nodeSelector",
+			Value: map[string]string{
+				"spot": "true",
+			},
+		})
+	} else {
+		glog.Infof("node selector defined, append")
+		patch = append(patch, patchOperation{
+			Op:    "add",
+			Path:  "/spec/template/spec/nodeSelector/spot",
+			Value: "true",
+		})
+	}
+	return patch
+}
+
+func createPatch(availableAnnotations map[string]string, annotations map[string]string, availableLabels map[string]string, existingTolerations []corev1.Toleration, existingNodeSelector map[string]string) ([]byte, error) {
 	var patch []patchOperation
 
 	patch = append(patch, updateTolerations(availableAnnotations, annotations, existingTolerations)...)
+	patch = append(patch, updateNodeSelector(existingNodeSelector)...)
 
 	return json.Marshal(patch)
 }
@@ -213,6 +234,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	var (
 		availableLabels, availableAnnotations map[string]string
 		existingTolerations                   []corev1.Toleration
+		existingNodeSelector                  map[string]string
 		objectMeta                            *metav1.ObjectMeta
 		resourceNamespace, resourceName       string
 	)
@@ -234,6 +256,9 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 		resourceName, resourceNamespace, objectMeta = deployment.Name, deployment.Namespace, &deployment.ObjectMeta
 		availableLabels = deployment.Labels
 		existingTolerations = deployment.Spec.Template.Spec.Tolerations
+		existingNodeSelector = deployment.Spec.Template.Spec.NodeSelector
+
+		glog.Infof("Existing node selectors: %v", existingNodeSelector)
 	// TODO:  Chaange this to stateful set
 	case "Service":
 		var service corev1.Service
@@ -257,7 +282,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	}
 
 	annotations := map[string]string{admissionWebhookAnnotationStatusKey: "mutated"}
-	patchBytes, err := createPatch(availableAnnotations, annotations, availableLabels, existingTolerations)
+	patchBytes, err := createPatch(availableAnnotations, annotations, availableLabels, existingTolerations, existingNodeSelector)
 	if err != nil {
 		return &v1beta1.AdmissionResponse{
 			Result: &metav1.Status{
