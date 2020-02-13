@@ -203,13 +203,17 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 		existingNodeSelector                  map[string]string
 		objectMeta                            *metav1.ObjectMeta
 		resourceNamespace, resourceName       string
+		mutateRequied                         bool
 	)
 
 	glog.Infof("AdmissionReview for Kind=%v, Namespace=%v Name=%v (%v) UID=%v patchOperation=%v UserInfo=%v",
 		req.Kind, req.Namespace, req.Name, resourceName, req.UID, req.Operation, req.UserInfo)
 
+	mutateRequied = false
+
 	switch req.Kind.Kind {
 	case "Deployment":
+		glog.Infof("This is a deployment, we should patch it")
 		var deployment appsv1.Deployment
 		if err := json.Unmarshal(req.Object.Raw, &deployment); err != nil {
 			glog.Errorf("Could not unmarshal raw object: %v", err)
@@ -224,23 +228,25 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 		existingTolerations = deployment.Spec.Template.Spec.Tolerations
 		existingNodeSelector = deployment.Spec.Template.Spec.NodeSelector
 
+		mutateRequied = true
+
 		glog.Infof("Existing node selectors: %v", existingNodeSelector)
-	// TODO:  Chaange this to stateful set
-	case "Service":
-		var service corev1.Service
-		if err := json.Unmarshal(req.Object.Raw, &service); err != nil {
-			glog.Errorf("Could not unmarshal raw object: %v", err)
-			return &v1beta1.AdmissionResponse{
-				Result: &metav1.Status{
-					Message: err.Error(),
-				},
-			}
-		}
-		resourceName, resourceNamespace, objectMeta = service.Name, service.Namespace, &service.ObjectMeta
-		availableLabels = service.Labels
+		// TODO:  Chaange this to stateful set
+		// case "Service":
+		// 	var service corev1.Service
+		// 	if err := json.Unmarshal(req.Object.Raw, &service); err != nil {
+		// 		glog.Errorf("Could not unmarshal raw object: %v", err)
+		// 		return &v1beta1.AdmissionResponse{
+		// 			Result: &metav1.Status{
+		// 				Message: err.Error(),
+		// 			},
+		// 		}
+		// 	}
+		// 	resourceName, resourceNamespace, objectMeta = service.Name, service.Namespace, &service.ObjectMeta
+		// 	availableLabels = service.Labels
 	}
 
-	if !mutationRequired(ignoredNamespaces, objectMeta) {
+	if !mutationRequired(ignoredNamespaces, objectMeta) || mutateRequied == false {
 		glog.Infof("Skipping validation for %s/%s due to policy check", resourceNamespace, resourceName)
 		return &v1beta1.AdmissionResponse{
 			Allowed: true,
