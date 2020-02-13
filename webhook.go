@@ -231,19 +231,6 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 		mutateRequied = true
 
 		glog.Infof("Existing node selectors: %v", existingNodeSelector)
-		// TODO:  Chaange this to stateful set
-		// case "Service":
-		// 	var service corev1.Service
-		// 	if err := json.Unmarshal(req.Object.Raw, &service); err != nil {
-		// 		glog.Errorf("Could not unmarshal raw object: %v", err)
-		// 		return &v1beta1.AdmissionResponse{
-		// 			Result: &metav1.Status{
-		// 				Message: err.Error(),
-		// 			},
-		// 		}
-		// 	}
-		// 	resourceName, resourceNamespace, objectMeta = service.Name, service.Namespace, &service.ObjectMeta
-		// 	availableLabels = service.Labels
 	}
 
 	if !mutationRequired(ignoredNamespaces, objectMeta) || mutateRequied == false {
