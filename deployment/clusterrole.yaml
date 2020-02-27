@@ -1,12 +1,12 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: admission-webhook-example-cr
+  name: spot-instance-webhook
   labels:
-    app: admission-webhook-example
+    app: spot-instance-webhook
 rules:
 - apiGroups:
-  - banzaicloud.com
+  - banzaicloud.com  # TODO:  What is an API Group rule?
   resources:
   - "*"
   verbs:

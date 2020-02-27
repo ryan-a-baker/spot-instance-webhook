@@ -1,14 +1,14 @@
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: mutating-webhook-example-cfg
+  name: spot-instance-webhook
   labels:
-    app: admission-webhook-example
+    app: spot-instance-webhook
 webhooks:
-  - name: mutating-example.banzaicloud.com
+  - name: spot-instance-webhook
     clientConfig:
       service:
-        name: admission-webhook-example-svc
+        name: spot-instance-webhook
         namespace: default
         path: "/mutate"
       caBundle: ${CA_BUNDLE}

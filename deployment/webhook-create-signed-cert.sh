@@ -46,8 +46,8 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
-[ -z ${service} ] && service=admission-webhook-example-svc
-[ -z ${secret} ] && secret=admission-webhook-example-certs
+[ -z ${service} ] && service=spot-instance-webhook
+[ -z ${secret} ] && secret=spot-instance-webhook-certs
 [ -z ${namespace} ] && namespace=default
 
 if [ ! -x "$(command -v openssl)" ]; then

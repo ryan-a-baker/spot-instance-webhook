@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: admission-webhook-example-deployment
+  name: spot-instance-webhook
   labels:
-    app: admission-webhook-example
+    app: spot-instance-webhook
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: admission-webhook-example
+      app: spot-instance-webhook
   template:
     metadata:
       labels:
-        app: admission-webhook-example
+        app: spot-instance-webhook
     spec:
       containers:
-        - name: admission-webhook-example
-          image: martonsereg/admission-webhook-example:v1
+        - name: spot-instance-webhook
+          image: theryanbaker/spot-instance-webhook:v1
           imagePullPolicy: Always
           args:
             - -tlsCertFile=/etc/webhook/certs/cert.pem
@@ -31,4 +31,4 @@ spec:
       volumes:
         - name: webhook-certs
           secret:
-            secretName: admission-webhook-example-certs
+            secretName: spot-instance-webhook-certs

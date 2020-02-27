@@ -1,14 +1,14 @@
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: admission-webhook-example-deployment-crb 
+  name: spot-instance-webhook
   labels:
-    app: admission-webhook-example
+    app: spot-instance-webhook
 subjects:
 - kind: ServiceAccount
-  name: admission-webhook-example-deployment-sa
-  namespace: pipeline-infra
+  name: spot-instance-webhook
+  namespace: pipeline-infra  # TODO: What is the pipeline infra namespace?
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: admission-webhook-example-deployment-cr
+  name: spot-instance-webhook
