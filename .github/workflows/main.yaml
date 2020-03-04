@@ -7,7 +7,7 @@ jobs:
     steps:
     - name: Build Docker Image
       id: build
-      uses: actions/spot-instance-webhook@master
+      uses: actions/spot-instance-webhook@v1
       # with:
       #   who-to-greet: 'Mona the Octocat'
     # Use the output from the `hello` step
