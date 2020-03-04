@@ -12,6 +12,6 @@ RUN dep ensure -v
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /tmp/spot-instance-webhook
 
 FROM alpine:latest
-COPY --from=builder /tmp/spot-instance-webhook /
-ENTRYPOINT ["/spot-instance-webhook"]
+COPY --from=builder /tmp/spot-instance-webhook ./
+ENTRYPOINT ["./spot-instance-webhook"]
 
