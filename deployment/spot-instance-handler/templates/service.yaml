@@ -1,16 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "spot-instance-handler.fullname" . }}
+  name: spot-instance-webhook
   labels:
-{{ include "spot-instance-handler.labels" . | indent 4 }}
+    app: spot-instance-webhook
 spec:
-  type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: http
-      protocol: TCP
-      name: http
+  - port: 443
+    targetPort: 443
   selector:
-    app.kubernetes.io/name: {{ include "spot-instance-handler.name" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    app: spot-instance-webhook

@@ -5,13 +5,13 @@ metadata:
   labels:
     app: spot-instance-webhook
 webhooks:
-  - name: spot-instance-webhook
+  - name:  spot-instance.handler.c2fo.com
     clientConfig:
       service:
         name: spot-instance-webhook
         namespace: default
         path: "/mutate"
-      caBundle: ${CA_BUNDLE}
+      caBundle: {{ .Values.CABundle }}
     rules:
       - operations: [ "CREATE", "UPDATE" ]
         apiGroups: ["apps", ""]
