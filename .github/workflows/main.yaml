@@ -7,14 +7,9 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@master
-    # - name: Build Docker Image
-    #   id: build
-    #   #uses: actions/spot-instance-webhook@v1
-    #   uses: ./
-    #   # with:
-    #   #   who-to-greet: 'Mona the Octocat'
-    # # Use the output from the `hello` step
-    # # - name: Get the output time
-    # #   run: echo "The time was ${{ steps.hello.outputs.time }}"
+    - name: Login to DockerHub Registry
+      run: echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
     - name: Build the tagged Docker image
       run: docker build . --file Dockerfile --tag theryanbaker/spot-instance-webhook:v1
+    - name: Push the Image to Docker
+      run: docker push theryanbaker/spot-instance-webhook:v1
