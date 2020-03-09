@@ -14,7 +14,7 @@ webhooks:
       caBundle: {{ .Values.CABundle }}
     rules:
       - operations: [ "CREATE", "UPDATE" ]
-        apiGroups: ["apps", ""]
+        apiGroups: ["apps", "namespaces", ""]
         apiVersions: ["v1", "v1beta1"]
         resources: ["deployments", "namespaces"]
     namespaceSelector:
