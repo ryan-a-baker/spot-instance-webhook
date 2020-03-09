@@ -1,9 +1,9 @@
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: spot-instance-webhook
+  name: label-namespace-webhook
   labels:
-    app: spot-instance-webhook
+    app: label-namespace-webhook
 webhooks:
   - name:  spot-instance.handler.c2fo.com
     clientConfig:
@@ -13,11 +13,8 @@ webhooks:
         path: "/mutate"
       caBundle: {{ .Values.CABundle }}
     rules:
-      - operations: [ "CREATE", "UPDATE" ]
-        apiGroups: ["apps", ""]
+      - operations: [ "CREATE" ]
+        apiGroups: ["namespaces", ""]
         apiVersions: ["v1", "v1beta1"]
-        resources: ["deployments"]
- #   namespaceSelector:
- #     matchLabels:
- #       spot-deploy: enabled
+        resources: ["namespaces"]
 
