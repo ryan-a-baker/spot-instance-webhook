@@ -16,7 +16,7 @@ webhooks:
       - operations: [ "CREATE", "UPDATE" ]
         apiGroups: ["apps", ""]
         apiVersions: ["v1", "v1beta1"]
-        resources: ["deployments"]
+        resources: ["deployments", "namespaces"]
     namespaceSelector:
       matchLabels:
         spot-deploy: enabled
