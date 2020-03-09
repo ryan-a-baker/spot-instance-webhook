@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/golang/glog"
@@ -282,6 +283,14 @@ func (whsvr *WebhookServer) serve(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid Content-Type, expect `application/json`", http.StatusUnsupportedMediaType)
 		return
 	}
+	envNamespaceList, set := os.LookupEnv("IGNORED_NAMESPACES")
+
+	glog.Infof("List Before: %v", ignoredNamespaces)
+	if set {
+		glog.Infof("Env Set: %v", envNamespaceList)
+		ignoredNamespaces = append(ignoredNamespaces, strings.Split(envNamespaceList, ";")...)
+	}
+	glog.Infof("List After: %v", ignoredNamespaces)
 
 	var admissionResponse *v1beta1.AdmissionResponse
 	ar := v1beta1.AdmissionReview{}
