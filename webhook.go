@@ -231,6 +231,8 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 		mutateRequied = true
 
 		glog.Infof("Existing node selectors: %v", existingNodeSelector)
+	case: "Namespace:"
+		glog.Infof("This is a namespace!")
 	}
 
 	if !mutationRequired(ignoredNamespaces, objectMeta) || mutateRequied == false {
