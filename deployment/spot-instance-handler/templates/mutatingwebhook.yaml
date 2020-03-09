@@ -17,7 +17,7 @@ webhooks:
         apiGroups: ["apps", ""]
         apiVersions: ["v1", "v1beta1"]
         resources: ["deployments"]
-    namespaceSelector:
-      matchLabels:
-        spot-deploy: enabled
+    #namespaceSelector:
+    #  matchLabels:
+    #    spot-deploy: enabled
 
