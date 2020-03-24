@@ -25,9 +25,9 @@ Create a signed cert using the script from the Istio team.  This will create a s
 
 Now, get the CA bundle from your current context, so the cert that was signed by the K8S api can be trusted
 
-`kubectl get configmap -n kube-system extension-apiserver-authentication -o=jsonpath='{.data.client-ca-file}' | base64 | tr -d '\n'`
+`kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[].cluster.certificate-authority-data}'`
 
-This, you'll want to place in your values file for the `CABundle:` value
+This, you'll want to place in your values file for the `CABundle:` value (minus the %)
 
 Finally, deploy the chart:
 
