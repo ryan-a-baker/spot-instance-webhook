@@ -1,0 +1,25 @@
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: spot-instance-webhook
+  labels:
+    app: spot-instance-webhook
+webhooks:
+  - name:  spot-instance-webhook.k8s.io
+    clientConfig:
+      service:
+        name: spot-instance-webhook
+        namespace: default
+        path: "/mutate"
+      caBundle: {{ .Values.CABundle }}
+    rules:
+      - operations: [ "CREATE", "UPDATE" ]
+        apiGroups: ["apps", ""]
+        apiVersions: ["v1", "v1beta1"]
+        resources: ["deployments"]
+{{- if not .Values.mutateAllNamespaces }}
+    namespaceSelector:
+      matchLabels:
+       spot-deploy: enabled
+{{- end }}
+

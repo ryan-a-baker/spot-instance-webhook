@@ -1,0 +1,13 @@
+The spot instance webhook has now been deployed.
+
+Based on the configuration:
+
+{{- if not .Values.mutateAllNamespaces }}
+Namespaces labeled "spot-deploy=enabled" will run on spot instance by injecting node selectors and tolerations  to deployments (and only deployments) 
+{{- else }}
+All namespaces will run on spot instance by injecting node selectors and tolerations to deployments (and only deployments)
+{{- end }}
+
+Note:  The following namespaces are excluded explicility by the webhook (system namespaces) or by request: kube-public;kube-system;{{ .Values.namespacesToExclude }}
+
+

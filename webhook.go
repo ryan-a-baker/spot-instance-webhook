@@ -285,12 +285,11 @@ func (whsvr *WebhookServer) serve(w http.ResponseWriter, r *http.Request) {
 	}
 	envNamespaceList, set := os.LookupEnv("IGNORED_NAMESPACES")
 
-	glog.Infof("List Before: %v", ignoredNamespaces)
 	if set {
 		glog.Infof("Env Set: %v", envNamespaceList)
 		ignoredNamespaces = append(ignoredNamespaces, strings.Split(envNamespaceList, ";")...)
 	}
-	glog.Infof("List After: %v", ignoredNamespaces)
+	glog.Infof("The following namspaces will be excluded from spot instances: %v", ignoredNamespaces)
 
 	var admissionResponse *v1beta1.AdmissionResponse
 	ar := v1beta1.AdmissionReview{}
