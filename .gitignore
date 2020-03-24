@@ -13,5 +13,6 @@
 
 vendor/*
 
-deployment/mutatingwebhook-ca-bundle.yaml
-deployment/validatingwebhook-ca-bundle.yaml
+mutatingwebhook-ca-bundle.yaml
+validatingwebhook-ca-bundle.yaml
+/spot-instance-webhook
