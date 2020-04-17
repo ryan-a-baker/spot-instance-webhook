@@ -83,7 +83,7 @@ func isNameSpaceIgnored(ignoredList []string, reqNamespace string) bool {
 func tolerationAlreadyExists(existingTolerations []corev1.Toleration) bool {
 	for _, tol := range existingTolerations {
 		if tol.MatchToleration(&tolerationToAdd) {
-			glog.Infof("Toleration already exists, no need to add it")
+			glog.Infof("Toleration already exists on the resource")
 			return true
 		}
 	}
@@ -93,8 +93,8 @@ func tolerationAlreadyExists(existingTolerations []corev1.Toleration) bool {
 // Check to see if the node selector for the spot instance nodes already exists on the
 // resource, if so, return false, else return true
 func selectorAlreadyExists(existingNodeSelector map[string]string) bool {
-	if existingNodeSelector["spot1"] == "true" {
-		glog.Infof("Selector already exists, no need to add it")
+	if existingNodeSelector["spot"] == "true" {
+		glog.Infof("Node Selector already exists on the resource")
 		return true
 	}
 	return false
