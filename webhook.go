@@ -35,20 +35,12 @@ var (
 	}
 )
 
-const (
-	admissionWebhookAnnotationValidateKey = "admission-webhook-example.banzaicloud.com/validate"
-	admissionWebhookAnnotationMutateKey   = "admission-webhook-example.banzaicloud.com/mutate"
-	admissionWebhookAnnotationStatusKey   = "admission-webhook-example.banzaicloud.com/status"
-
-	nameLabel      = "app.kubernetes.io/name"
-	instanceLabel  = "app.kubernetes.io/instance"
-	versionLabel   = "app.kubernetes.io/version"
-	componentLabel = "app.kubernetes.io/component"
-	partOfLabel    = "app.kubernetes.io/part-of"
-	managedByLabel = "app.kubernetes.io/managed-by"
-
-	NA = "not_available"
-)
+var tolerationToAdd = corev1.Toleration{
+	Key:      "spot",
+	Value:    "true",
+	Operator: "Equal",
+	Effect:   "NoSchedule",
+}
 
 type WebhookServer struct {
 	server *http.Server
@@ -76,68 +68,52 @@ func init() {
 	_ = v1.AddToScheme(runtimeScheme)
 }
 
-func admissionRequired(ignoredList []string, admissionAnnotationKey string, metadata *metav1.ObjectMeta) bool {
-	// skip special kubernetes system namespaces
+func isNameSpaceIgnored(ignoredList []string, reqNamespace string) bool {
+	// Skip system or requested namespaces
 	for _, namespace := range ignoredList {
-		if metadata.Namespace == namespace {
-			glog.Infof("Skip validation for %v for it's in special namespace:%v", metadata.Name, metadata.Namespace)
-			return false
+		if reqNamespace == namespace {
+			return true
 		}
 	}
-
-	annotations := metadata.GetAnnotations()
-	if annotations == nil {
-		annotations = map[string]string{}
-	}
-
-	var required bool
-	switch strings.ToLower(annotations[admissionAnnotationKey]) {
-	default:
-		required = true
-	case "n", "no", "false", "off":
-		required = false
-	}
-	return required
+	return false
 }
 
-// TODO:  Check if the toleration/nodeSelector is already on the deployment
-func mutationRequired(ignoredList []string, metadata *metav1.ObjectMeta) bool {
-	required := admissionRequired(ignoredList, admissionWebhookAnnotationMutateKey, metadata)
-	annotations := metadata.GetAnnotations()
-	if annotations == nil {
-		annotations = map[string]string{}
+// Check to see if the toleration for spot instances already exists on the resource,
+// if so, return false as we ddon't need to make any adjustments
+func tolerationAlreadyExists(existingTolerations []corev1.Toleration) bool {
+	for _, tol := range existingTolerations {
+		if tol.MatchToleration(&tolerationToAdd) {
+			glog.Infof("Toleration already exists, no need to add it")
+			return true
+		}
 	}
-	status := annotations[admissionWebhookAnnotationStatusKey]
+	return false
+}
 
-	if strings.ToLower(status) == "mutated" {
-		required = false
+// Check to see if the node selector for the spot instance nodes already exists on the
+// resource, if so, return false, else return true
+func selectorAlreadyExists(existingNodeSelector map[string]string) bool {
+	if existingNodeSelector["spot1"] == "true" {
+		glog.Infof("Selector already exists, no need to add it")
+		return true
 	}
-
-	glog.Infof("Mutation policy for %v/%v: required:%v", metadata.Namespace, metadata.Name, required)
-	return required
+	return false
 }
 
 // This may just be able to be Tolerations
-func updateTolerations(target map[string]string, added map[string]string, existingTolerations []corev1.Toleration) (patch []patchOperation) {
-
-	var tolerationToAdd = corev1.Toleration{
-		Key:      "spot",
-		Value:    "true",
-		Operator: "Equal",
-		Effect:   "NoSchedule",
-	}
+func updateTolerations(existingTolerations []corev1.Toleration) (patch []patchOperation) {
 
 	var updateNeeded = true
 	// perhaps move this to a function to clean up code
 
-	for _, tol := range existingTolerations {
-		fmt.Println(tol)
-		fmt.Println(tolerationToAdd)
-		if tol.MatchToleration(&tolerationToAdd) {
-			glog.Infof("Toleration already exists, no need to update it")
-			updateNeeded = false
-		}
-	}
+	// for _, tol := range existingTolerations {
+	// 	fmt.Println(tol)
+	// 	fmt.Println(tolerationToAdd)
+	// 	if tol.MatchToleration(&tolerationToAdd) {
+	// 		glog.Infof("Toleration already exists, no need to update it")
+	// 		updateNeeded = false
+	// 	}
+	// }
 
 	if updateNeeded {
 		glog.Infof("Toleration does not exist on deployment, add it")
@@ -186,12 +162,13 @@ func updateNodeSelector(existingNodeSelector map[string]string) (patch []patchOp
 	return patch
 }
 
-func createPatch(availableAnnotations map[string]string, annotations map[string]string, availableLabels map[string]string, existingTolerations []corev1.Toleration, existingNodeSelector map[string]string) ([]byte, error) {
+func createPatch(existingTolerations []corev1.Toleration, existingNodeSelector map[string]string) ([]byte, error) {
 	var patch []patchOperation
-
-	patch = append(patch, updateTolerations(availableAnnotations, annotations, existingTolerations)...)
+	glog.Infof("Patch: %v", patch)
+	patch = append(patch, updateTolerations(existingTolerations)...)
+	glog.Infof("Patch: %v", patch)
 	patch = append(patch, updateNodeSelector(existingNodeSelector)...)
-
+	glog.Infof("Patch: %v", patch)
 	return json.Marshal(patch)
 }
 
@@ -199,22 +176,29 @@ func createPatch(availableAnnotations map[string]string, annotations map[string]
 func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	req := ar.Request
 	var (
-		availableLabels, availableAnnotations map[string]string
-		existingTolerations                   []corev1.Toleration
-		existingNodeSelector                  map[string]string
-		objectMeta                            *metav1.ObjectMeta
-		resourceNamespace, resourceName       string
-		mutateRequied                         bool
+		existingTolerations  []corev1.Toleration
+		existingNodeSelector map[string]string
+		//objectMeta                      *metav1.ObjectMeta
+		resourceName string
+		//mutateRequied                   bool
 	)
 
 	glog.Infof("AdmissionReview for Kind=%v, Namespace=%v Name=%v (%v) UID=%v patchOperation=%v UserInfo=%v",
 		req.Kind, req.Namespace, req.Name, resourceName, req.UID, req.Operation, req.UserInfo)
 
-	mutateRequied = false
+	//First thing we should do is check the namespace of the request because if it's in a namespace
+	//we ignore, don't need to advance any further anyways
+	if isNameSpaceIgnored(ignoredNamespaces, req.Namespace) {
+		glog.Infof("Skip mutation for %v for because it's in an ignored namespace:%v", req.Name, req.Namespace)
+		return &v1beta1.AdmissionResponse{
+			Allowed: true,
+		}
+	}
+
+	//mutateRequied = false
 
 	switch req.Kind.Kind {
 	case "Deployment":
-		glog.Infof("This is a deployment, we should patch it")
 		var deployment appsv1.Deployment
 		if err := json.Unmarshal(req.Object.Raw, &deployment); err != nil {
 			glog.Errorf("Could not unmarshal raw object: %v", err)
@@ -224,25 +208,57 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 				},
 			}
 		}
-		resourceName, resourceNamespace, objectMeta = deployment.Name, deployment.Namespace, &deployment.ObjectMeta
-		availableLabels = deployment.Labels
+		// These are set here because in the event that we add another case for daemonset, the values are
+		// dereferenced from their k8s "kind" and it can be treated generically going forward
+		//resourceName, resourceNamespace, objectMeta = deployment.Name, deployment.Namespace, &deployment.ObjectMeta
 		existingTolerations = deployment.Spec.Template.Spec.Tolerations
 		existingNodeSelector = deployment.Spec.Template.Spec.NodeSelector
 
-		mutateRequied = true
-
-		glog.Infof("Existing node selectors: %v", existingNodeSelector)
-	}
-
-	if !mutationRequired(ignoredNamespaces, objectMeta) || mutateRequied == false {
-		glog.Infof("Skipping validation for %s/%s due to policy check", resourceNamespace, resourceName)
+		//mutateRequied = true
+	// We should never hit this, since we are only sending deployments through from the webhook config,
+	// but just incase, let's handle if a resource type gets through that isn't currently supported
+	default:
+		glog.Infof("%v is a %v, is not a supported resource type for the webhook", req.Name, req.Kind.Kind)
 		return &v1beta1.AdmissionResponse{
 			Allowed: true,
 		}
 	}
 
-	annotations := map[string]string{admissionWebhookAnnotationStatusKey: "mutated"}
-	patchBytes, err := createPatch(availableAnnotations, annotations, availableLabels, existingTolerations, existingNodeSelector)
+	glog.Infof("Tolerations: %v", existingTolerations)
+	glog.Infof("Node Selector: %v", existingNodeSelector)
+
+	var patch []patchOperation
+
+	if !tolerationAlreadyExists(existingTolerations) {
+		glog.Infof("Tolerations need to be added, invoke patch")
+		patch = append(patch, updateTolerations(existingTolerations)...)
+	}
+
+	if !selectorAlreadyExists(existingNodeSelector) {
+		glog.Infof("Node Selector needs to be added, invoke patch")
+		patch = append(patch, updateNodeSelector(existingNodeSelector)...)
+	}
+
+	// if no patches were made, we don't need to do anything further, just return
+	if patch == nil {
+		return &v1beta1.AdmissionResponse{
+			Allowed: true,
+		}
+	}
+
+	// At this point we know it's a resource kind we support and it's not in an ingored namespace,
+	// let's check if the tolerations are already set, and if not, set them
+
+	//TODO:  Here, we should check to see if the deployment already has the required node selector and
+	//       tolerations, if it does, then we shouldn't need to do anything
+	// if !mutationRequired(ignoredNamespaces, objectMeta, existingTolerations, existingNodeSelector) || mutateRequied == false {
+	// 	glog.Infof("Skipping validation for %s/%s due to policy check", resourceNamespace, resourceName)
+	// 	return &v1beta1.AdmissionResponse{
+	// 		Allowed: true,
+	// 	}
+	// }
+
+	patchBytes, err := createPatch(existingTolerations, existingNodeSelector)
 	if err != nil {
 		return &v1beta1.AdmissionResponse{
 			Result: &metav1.Status{
@@ -283,13 +299,15 @@ func (whsvr *WebhookServer) serve(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid Content-Type, expect `application/json`", http.StatusUnsupportedMediaType)
 		return
 	}
+
+	// Pull in the environment variable for the namespaces we should ignore and add it to the
+	// list of ingored namespaces
 	envNamespaceList, set := os.LookupEnv("IGNORED_NAMESPACES")
 
 	if set {
-		glog.Infof("Env Set: %v", envNamespaceList)
 		ignoredNamespaces = append(ignoredNamespaces, strings.Split(envNamespaceList, ";")...)
 	}
-	glog.Infof("The following namspaces will be excluded from spot instances: %v", ignoredNamespaces)
+	glog.Infof("The following namspaces are excluded from spot instance injections: %v", ignoredNamespaces)
 
 	var admissionResponse *v1beta1.AdmissionResponse
 	ar := v1beta1.AdmissionReview{}

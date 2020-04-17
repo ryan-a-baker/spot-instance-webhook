@@ -32,7 +32,3 @@ This, you'll want to place in your values file for the `CABundle:` value (minus 
 Finally, deploy the chart:
 
 `helm upgrade --install --namespace spot-instance-webhook spot-instance-webhook spot-instance-webhook`
-
-
-
-
