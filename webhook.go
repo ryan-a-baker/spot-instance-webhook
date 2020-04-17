@@ -156,12 +156,12 @@ func createPatch(existingTolerations []corev1.Toleration, existingNodeSelector m
 	var patch []patchOperation
 
 	if !tolerationAlreadyExists(existingTolerations) {
-		glog.Infof("Tolerations need to be added, invoke patch")
+		glog.Infof("Patching resource to add toleration")
 		patch = append(patch, updateTolerations(existingTolerations)...)
 	}
 
 	if !selectorAlreadyExists(existingNodeSelector) {
-		glog.Infof("Node Selector needs to be added, invoke patch")
+		glog.Infof("Patching resource to add node selector")
 		patch = append(patch, updateNodeSelector(existingNodeSelector)...)
 	}
 
