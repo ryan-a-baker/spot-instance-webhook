@@ -103,37 +103,34 @@ func selectorAlreadyExists(existingNodeSelector map[string]string) bool {
 // This may just be able to be Tolerations
 func updateTolerations(existingTolerations []corev1.Toleration) (patch []patchOperation) {
 
-	var updateNeeded = true
-
-	if updateNeeded {
-		glog.Infof("Toleration does not exist on deployment, add it")
-		if existingTolerations == nil {
-			glog.Infof("Tolerations do not exist, patching empty tolerations")
-			patch = append(patch, patchOperation{
-				Op:    "add",
-				Path:  "/spec/template/spec/tolerations",
-				Value: []string{},
-			})
-		}
-		// This is appended only after we determine that the
-		// toleration exists
+	if existingTolerations == nil {
+		glog.Infof("No existing tolerations defined on the resource, create a toleration item")
 		patch = append(patch, patchOperation{
-			Op:   "add",
-			Path: "/spec/template/spec/tolerations/-",
-			Value: map[string]string{
-				"key":      "spot",
-				"operator": "Equal",
-				"value":    `true`,
-				"effect":   "NoSchedule",
-			},
+			Op:    "add",
+			Path:  "/spec/template/spec/tolerations",
+			Value: []string{},
 		})
 	}
+	// This is appended only after we determine that the
+	// toleration exists
+	glog.Infof("Append spot instance toleration for resource")
+	patch = append(patch, patchOperation{
+		Op:   "add",
+		Path: "/spec/template/spec/tolerations/-",
+		Value: map[string]string{
+			"key":      "spot",
+			"operator": "Equal",
+			"value":    `true`,
+			"effect":   "NoSchedule",
+		},
+	})
 	return patch
 }
 
 func updateNodeSelector(existingNodeSelector map[string]string) (patch []patchOperation) {
+
 	if existingNodeSelector == nil {
-		glog.Infof("No node selector defined, add")
+		glog.Infof("No existing node selectors defined on the resource, create a node selector and add the spot instance selector")
 		patch = append(patch, patchOperation{
 			Op:   "add",
 			Path: "/spec/template/spec/nodeSelector",
@@ -142,7 +139,7 @@ func updateNodeSelector(existingNodeSelector map[string]string) (patch []patchOp
 			},
 		})
 	} else {
-		glog.Infof("node selector defined, append")
+		glog.Infof("Existing node selector defined on the resource, append the spot instance node selector to the existing selector")
 		patch = append(patch, patchOperation{
 			Op:    "add",
 			Path:  "/spec/template/spec/nodeSelector/spot",
@@ -156,12 +153,12 @@ func createPatch(existingTolerations []corev1.Toleration, existingNodeSelector m
 	var patch []patchOperation
 
 	if !tolerationAlreadyExists(existingTolerations) {
-		glog.Infof("Patching resource to add toleration")
+		glog.Infof("Toleration did not exist on resource, creating patch")
 		patch = append(patch, updateTolerations(existingTolerations)...)
 	}
 
 	if !selectorAlreadyExists(existingNodeSelector) {
-		glog.Infof("Patching resource to add node selector")
+		glog.Infof("Node selector did not exist on resource, creating patch")
 		patch = append(patch, updateNodeSelector(existingNodeSelector)...)
 	}
 
@@ -179,9 +176,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	var (
 		existingTolerations  []corev1.Toleration
 		existingNodeSelector map[string]string
-		//objectMeta                      *metav1.ObjectMeta
-		resourceName string
-		//mutateRequied                   bool
+		resourceName         string
 	)
 
 	glog.Infof("AdmissionReview for Kind=%v, Namespace=%v Name=%v (%v) UID=%v patchOperation=%v UserInfo=%v",
@@ -195,8 +190,6 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 			Allowed: true,
 		}
 	}
-
-	//mutateRequied = false
 
 	switch req.Kind.Kind {
 	case "Deployment":
@@ -225,21 +218,11 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 		}
 	}
 
-	glog.Infof("Tolerations: %v", existingTolerations)
-	glog.Infof("Node Selector: %v", existingNodeSelector)
+	glog.Infof("Existing Tolerations on Resource: %v", existingTolerations)
+	glog.Infof("Existing Node Selector on Resource: %v", existingNodeSelector)
 
 	// At this point we know it's a resource kind we support and it's not in an ingored namespace,
-	// let's check if the tolerations are already set, and if not, set them
-
-	//TODO:  Here, we should check to see if the deployment already has the required node selector and
-	//       tolerations, if it does, then we shouldn't need to do anything
-	// if !mutationRequired(ignoredNamespaces, objectMeta, existingTolerations, existingNodeSelector) || mutateRequied == false {
-	// 	glog.Infof("Skipping validation for %s/%s due to policy check", resourceNamespace, resourceName)
-	// 	return &v1beta1.AdmissionResponse{
-	// 		Allowed: true,
-	// 	}
-	// }
-
+	// let's check pass along for patching, if required
 	patchBytes, err := createPatch(existingTolerations, existingNodeSelector)
 	if err != nil {
 		return &v1beta1.AdmissionResponse{
