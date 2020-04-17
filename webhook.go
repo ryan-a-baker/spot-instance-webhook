@@ -164,11 +164,11 @@ func updateNodeSelector(existingNodeSelector map[string]string) (patch []patchOp
 
 func createPatch(existingTolerations []corev1.Toleration, existingNodeSelector map[string]string) ([]byte, error) {
 	var patch []patchOperation
-	glog.Infof("Patch: %v", patch)
-	patch = append(patch, updateTolerations(existingTolerations)...)
-	glog.Infof("Patch: %v", patch)
-	patch = append(patch, updateNodeSelector(existingNodeSelector)...)
-	glog.Infof("Patch: %v", patch)
+	// glog.Infof("Patch: %v", patch)
+	// patch = append(patch, updateTolerations(existingTolerations)...)
+	// glog.Infof("Patch: %v", patch)
+	// patch = append(patch, updateNodeSelector(existingNodeSelector)...)
+	// glog.Infof("Patch: %v", patch)
 
 	if !tolerationAlreadyExists(existingTolerations) {
 		glog.Infof("Tolerations need to be added, invoke patch")
