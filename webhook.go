@@ -169,6 +169,22 @@ func createPatch(existingTolerations []corev1.Toleration, existingNodeSelector m
 	glog.Infof("Patch: %v", patch)
 	patch = append(patch, updateNodeSelector(existingNodeSelector)...)
 	glog.Infof("Patch: %v", patch)
+
+	if !tolerationAlreadyExists(existingTolerations) {
+		glog.Infof("Tolerations need to be added, invoke patch")
+		patch = append(patch, updateTolerations(existingTolerations)...)
+	}
+
+	if !selectorAlreadyExists(existingNodeSelector) {
+		glog.Infof("Node Selector needs to be added, invoke patch")
+		patch = append(patch, updateNodeSelector(existingNodeSelector)...)
+	}
+
+	// if no patches were made, return a nil patch
+	if patch == nil {
+		return nil, nil
+	}
+
 	return json.Marshal(patch)
 }
 
@@ -186,8 +202,8 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	glog.Infof("AdmissionReview for Kind=%v, Namespace=%v Name=%v (%v) UID=%v patchOperation=%v UserInfo=%v",
 		req.Kind, req.Namespace, req.Name, resourceName, req.UID, req.Operation, req.UserInfo)
 
-	//First thing we should do is check the namespace of the request because if it's in a namespace
-	//we ignore, don't need to advance any further anyways
+	// First thing we should do is check the namespace of the request because if it's in a namespace
+	// we ignore, don't need to advance any further anyways
 	if isNameSpaceIgnored(ignoredNamespaces, req.Namespace) {
 		glog.Infof("Skip mutation for %v for because it's in an ignored namespace:%v", req.Name, req.Namespace)
 		return &v1beta1.AdmissionResponse{
@@ -227,25 +243,6 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	glog.Infof("Tolerations: %v", existingTolerations)
 	glog.Infof("Node Selector: %v", existingNodeSelector)
 
-	var patch []patchOperation
-
-	if !tolerationAlreadyExists(existingTolerations) {
-		glog.Infof("Tolerations need to be added, invoke patch")
-		patch = append(patch, updateTolerations(existingTolerations)...)
-	}
-
-	if !selectorAlreadyExists(existingNodeSelector) {
-		glog.Infof("Node Selector needs to be added, invoke patch")
-		patch = append(patch, updateNodeSelector(existingNodeSelector)...)
-	}
-
-	// if no patches were made, we don't need to do anything further, just return
-	if patch == nil {
-		return &v1beta1.AdmissionResponse{
-			Allowed: true,
-		}
-	}
-
 	// At this point we know it's a resource kind we support and it's not in an ingored namespace,
 	// let's check if the tolerations are already set, and if not, set them
 
@@ -264,6 +261,14 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 			Result: &metav1.Status{
 				Message: err.Error(),
 			},
+		}
+	}
+
+	// We didn't apply a patch, so let's just return with no modifications
+	if patchBytes == nil {
+		glog.Infof("No Changes were required")
+		return &v1beta1.AdmissionResponse{
+			Allowed: true,
 		}
 	}
 

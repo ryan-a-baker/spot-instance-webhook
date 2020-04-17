@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: spot-instance-webhook
-          image: theryanbaker/spot-instance-webhook:v1
+          image: theryanbaker/spot-instance-webhook:alpha
           imagePullPolicy: Always
           env:
             - name: IGNORED_NAMESPACES
