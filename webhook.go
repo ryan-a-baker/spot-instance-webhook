@@ -104,16 +104,6 @@ func selectorAlreadyExists(existingNodeSelector map[string]string) bool {
 func updateTolerations(existingTolerations []corev1.Toleration) (patch []patchOperation) {
 
 	var updateNeeded = true
-	// perhaps move this to a function to clean up code
-
-	// for _, tol := range existingTolerations {
-	// 	fmt.Println(tol)
-	// 	fmt.Println(tolerationToAdd)
-	// 	if tol.MatchToleration(&tolerationToAdd) {
-	// 		glog.Infof("Toleration already exists, no need to update it")
-	// 		updateNeeded = false
-	// 	}
-	// }
 
 	if updateNeeded {
 		glog.Infof("Toleration does not exist on deployment, add it")
@@ -164,11 +154,6 @@ func updateNodeSelector(existingNodeSelector map[string]string) (patch []patchOp
 
 func createPatch(existingTolerations []corev1.Toleration, existingNodeSelector map[string]string) ([]byte, error) {
 	var patch []patchOperation
-	// glog.Infof("Patch: %v", patch)
-	// patch = append(patch, updateTolerations(existingTolerations)...)
-	// glog.Infof("Patch: %v", patch)
-	// patch = append(patch, updateNodeSelector(existingNodeSelector)...)
-	// glog.Infof("Patch: %v", patch)
 
 	if !tolerationAlreadyExists(existingTolerations) {
 		glog.Infof("Tolerations need to be added, invoke patch")
