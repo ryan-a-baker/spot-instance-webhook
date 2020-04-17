@@ -305,7 +305,7 @@ func (whsvr *WebhookServer) serve(w http.ResponseWriter, r *http.Request) {
 			admissionReview.Response.UID = ar.Request.UID
 		}
 	}
-
+	glog.Infof("Response: %v", admissionResponse)
 	resp, err := json.Marshal(admissionReview)
 	if err != nil {
 		glog.Errorf("Can't encode response: %v", err)
