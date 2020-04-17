@@ -208,7 +208,6 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 		existingTolerations = deployment.Spec.Template.Spec.Tolerations
 		existingNodeSelector = deployment.Spec.Template.Spec.NodeSelector
 
-		//mutateRequied = true
 	// We should never hit this, since we are only sending deployments through from the webhook config,
 	// but just incase, let's handle if a resource type gets through that isn't currently supported
 	default:
@@ -253,6 +252,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 
 // Serve method for webhook server
 func (whsvr *WebhookServer) serve(w http.ResponseWriter, r *http.Request) {
+	glog.Infof("Request: %v", r)
 	var body []byte
 	if r.Body != nil {
 		if data, err := ioutil.ReadAll(r.Body); err == nil {
@@ -292,7 +292,6 @@ func (whsvr *WebhookServer) serve(w http.ResponseWriter, r *http.Request) {
 			},
 		}
 	} else {
-		fmt.Println(r.URL.Path)
 		if r.URL.Path == "/mutate" {
 			admissionResponse = whsvr.mutate(&ar)
 		}
@@ -307,6 +306,7 @@ func (whsvr *WebhookServer) serve(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp, err := json.Marshal(admissionReview)
+	glog.Infof("Response: %v", resp)
 	if err != nil {
 		glog.Errorf("Can't encode response: %v", err)
 		http.Error(w, fmt.Sprintf("could not encode response: %v", err), http.StatusInternalServerError)
