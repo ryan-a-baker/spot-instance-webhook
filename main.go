@@ -2,9 +2,6 @@ package main
 
 import (
 	"flag"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/golang/glog"
 )
@@ -45,10 +42,10 @@ func main() {
 	glog.Info("Server started")
 
 	// listening OS shutdown singal
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
-	<-signalChan
+	// signalChan := make(chan os.Signal, 1)
+	// signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+	// <-signalChan
 
-	glog.Infof("Got OS shutdown signal, shutting down webhook server gracefully...")
+	// glog.Infof("Got OS shutdown signal, shutting down webhook server gracefully...")
 	//whsvr.server.Shutdown(context.Background())
 }
