@@ -2,10 +2,7 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"flag"
-	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -22,29 +19,29 @@ func main() {
 	flag.StringVar(&parameters.keyFile, "tlsKeyFile", "/etc/webhook/certs/key.pem", "File containing the x509 private key to --tlsCertFile.")
 	flag.Parse()
 
-	pair, err := tls.LoadX509KeyPair(parameters.certFile, parameters.keyFile)
-	if err != nil {
-		glog.Errorf("Failed to load key pair: %v", err)
-	}
+	// pair, err := tls.LoadX509KeyPair(parameters.certFile, parameters.keyFile)
+	// if err != nil {
+	// 	glog.Errorf("Failed to load key pair: %v", err)
+	// }
 
-	whsvr := &WebhookServer{
-		server: &http.Server{
-			Addr:      fmt.Sprintf(":%v", parameters.port),
-			TLSConfig: &tls.Config{Certificates: []tls.Certificate{pair}},
-		},
-	}
+	// whsvr := &WebhookServer{
+	// 	server: &http.Server{
+	// 		Addr:      fmt.Sprintf(":%v", parameters.port),
+	// 		TLSConfig: &tls.Config{Certificates: []tls.Certificate{pair}},
+	// 	},
+	// }
 
-	// define http server and server handler
-	mux := http.NewServeMux()
-	mux.HandleFunc("/mutate", whsvr.serve)
-	whsvr.server.Handler = mux
+	// // define http server and server handler
+	// mux := http.NewServeMux()
+	// mux.HandleFunc("/mutate", whsvr.serve)
+	// whsvr.server.Handler = mux
 
-	// start webhook server in new routine
-	go func() {
-		if err := whsvr.server.ListenAndServeTLS("", ""); err != nil {
-			glog.Errorf("Failed to listen and serve webhook server: %v", err)
-		}
-	}()
+	// // start webhook server in new routine
+	// go func() {
+	// 	if err := whsvr.server.ListenAndServeTLS("", ""); err != nil {
+	// 		glog.Errorf("Failed to listen and serve webhook server: %v", err)
+	// 	}
+	// }()
 
 	glog.Info("Server started")
 
