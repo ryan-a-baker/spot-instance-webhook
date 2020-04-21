@@ -42,6 +42,7 @@ func main() {
 
 	glog.Info("Server started")
 	time.Sleep(30000 * time.Second)
+	glog.Info("Sleep existed")
 	// listening OS shutdown singal
 	// signalChan := make(chan os.Signal, 1)
 	// signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
