@@ -31,4 +31,41 @@ This, you'll want to place in your values file for the `CABundle:` value (minus 
 
 Finally, deploy the chart:
 
-`helm upgrade --install --namespace spot-instance-webhook spot-instance-webhook spot-instance-webhook`
+`helm upgrade --install --namespace spot-instance-webhook spot-instance-webhook`
+
+
+# Testing
+
+Here are the scenarios we need to test
+
+# Place all deployments on spot instances
+
+## Create new deployment
+
+## Update existing deployment
+
+# Place only label namespaces on spot instances
+# Node selector already exists
+# Different toleration already exists
+
+## Create new deployment in unlabled namespace
+Expected output - no taints or tolerations added
+## Create new deployment in a labeled namespace
+Expected output - taints and tolerations added
+## Create new deployment that already has a taint
+## Create new deployment that already has a toleration
+## Create a new deployment that has both a taint and toleration
+
+## Update existing deployment in an unlabeled namespace
+## Update existing deployment in a labeled namespace
+
+# Sad Path
+
+## Pod is not available
+
+
+
+# Current Issues
+## Pod must be deployed in default namespace
+
+
