@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"os"
 	"os/signal"
@@ -51,5 +50,5 @@ func main() {
 	<-signalChan
 
 	glog.Infof("Got OS shutdown signal, shutting down webhook server gracefully...")
-	whsvr.server.Shutdown(context.Background())
+	//whsvr.server.Shutdown(context.Background())
 }
