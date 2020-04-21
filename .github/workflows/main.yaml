@@ -12,4 +12,4 @@ jobs:
     - name: Build the tagged Docker image
       run: docker build . --file Dockerfile --tag theryanbaker/spot-instance-webhook:traptest
     - name: Push the Image to Docker
-      run: docker push theryanbaker/spot-instance-webhook:alpha
+      run: docker push theryanbaker/spot-instance-webhook:traptest
