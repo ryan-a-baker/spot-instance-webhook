@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/golang/glog"
 )
@@ -20,6 +21,8 @@ func main() {
 	flag.StringVar(&parameters.certFile, "tlsCertFile", "/etc/webhook/certs/cert.pem", "File containing the x509 Certificate for HTTPS.")
 	flag.StringVar(&parameters.keyFile, "tlsKeyFile", "/etc/webhook/certs/key.pem", "File containing the x509 private key to --tlsCertFile.")
 	flag.Parse()
+
+
 
 	// pair, err := tls.LoadX509KeyPair(parameters.certFile, parameters.keyFile)
 	// if err != nil {
@@ -54,5 +57,7 @@ func main() {
 	<-signalChan
 
 	glog.Infof("Got OS shutdown signal, shutting down webhook server gracefully...")
+	time.Sleep(60 * time.Second)
+	glog.Infof("Sleep complete")
 	whsvr.server.Shutdown(context.Background())
 }
