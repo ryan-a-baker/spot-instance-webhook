@@ -35,10 +35,9 @@ func main() {
 
 	// // define http server and server handler
 	mux := http.NewServeMux()
-	mux.HandleFunc("/mutate", whsvr.serve)
+	mux.HandleFunc("/", whsvr.serve)
 	whsvr.server.Handler = mux
 
-	glog.Info("Server started before")
 	// start webhook server in new routine
 	go func() {
 		//if err := whsvr.server.ListenAndServeTLS("", ""); err != nil {
