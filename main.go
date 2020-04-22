@@ -44,7 +44,7 @@ func main() {
 		}
 	}()
 
-	glog.Info("Server started")
+	glog.Info("Server started with no catch")
 
 	// handle interuptions
 	// signalChan := make(chan os.Signal, 1)
@@ -53,6 +53,6 @@ func main() {
 
 	// glog.Infof("Got OS shutdown signal, shutting down webhook server gracefully...")
 	time.Sleep(300 * time.Second)
-	glog.Infof("Sleep complete")
+	glog.Infof("Sleep complete - no catch")
 	whsvr.server.Shutdown(context.Background())
 }
