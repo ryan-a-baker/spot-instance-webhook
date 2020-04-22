@@ -261,7 +261,8 @@ func (whsvr *WebhookServer) serve(w http.ResponseWriter, r *http.Request) {
 	}
 	if len(body) == 0 {
 		glog.Error("empty body")
-		http.Error(w, "empty body", http.StatusBadRequest)
+		//http.Error(w, "empty body", http.StatusBadRequest)
+		fmt.Fprintf(w, "Hello!")
 		return
 	}
 	glog.Infof("Request: %v", body)

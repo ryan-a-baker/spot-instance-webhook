@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net/http"
@@ -10,11 +11,6 @@ import (
 
 	"github.com/golang/glog"
 )
-
-func handler(w http.ResponseWriter, r *http.Request) {
-	//fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
-	fmt.Fprintf(w, "hello!")
-}
 
 func main() {
 	var parameters WhSvrParameters
@@ -30,26 +26,25 @@ func main() {
 	// 	glog.Errorf("Failed to load key pair: %v", err)
 	// }
 
-	// whsvr := &WebhookServer{
-	// 	server: &http.Server{
-	// 		Addr: fmt.Sprintf(":%v", parameters.port),
-	// 		//TLSConfig: &tls.Config{Certificates: []tls.Certificate{pair}},
-	// 	},
-	// }
+	whsvr := &WebhookServer{
+		server: &http.Server{
+			Addr: fmt.Sprintf(":%v", parameters.port),
+			//TLSConfig: &tls.Config{Certificates: []tls.Certificate{pair}},
+		},
+	}
 
 	// // define http server and server handler
-	// mux := http.NewServeMux()
-	// mux.HandleFunc("/mutate", whsvr.serve)
-	// whsvr.server.Handler = mux
+	mux := http.NewServeMux()
+	mux.HandleFunc("/mutate", whsvr.serve)
+	whsvr.server.Handler = mux
 
+	glog.Info("Server started before")
 	// start webhook server in new routine
 	go func() {
 		//if err := whsvr.server.ListenAndServeTLS("", ""); err != nil {
-		// if err := whsvr.server.ListenAndServe(); err != nil {
-		// 	glog.Errorf("Failed to listen and serve webhook server: %v", err)
-		// }
-		http.HandleFunc("/", handler)
-		http.ListenAndServe(":8080", nil)
+		if err := whsvr.server.ListenAndServe(); err != nil {
+			glog.Errorf("Failed to listen and serve webhook server: %v", err)
+		}
 	}()
 
 	glog.Info("Server started")
@@ -60,5 +55,5 @@ func main() {
 	<-signalChan
 
 	glog.Infof("Got OS shutdown signal, shutting down webhook server gracefully...")
-	//whsvr.server.Shutdown(context.Background())
+	whsvr.server.Shutdown(context.Background())
 }
