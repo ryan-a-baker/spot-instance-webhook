@@ -53,6 +53,6 @@ func main() {
 
 	// glog.Infof("Got OS shutdown signal, shutting down webhook server gracefully...")
 	time.Sleep(300 * time.Second)
-	glog.Infof("Sleep complete - no catch")
+	glog.Infof("Sleep complete - no catch - blah")
 	whsvr.server.Shutdown(context.Background())
 }
