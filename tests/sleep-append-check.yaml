@@ -14,9 +14,11 @@ spec:
     spec:
       tolerations:
       - effect: NoSchedule
-        key: spot
+        key: test
         operator: Equal
         value: "true"
+      nodeSelector:
+       test: "true"
       containers:
       - name: sleep
         image: tutum/curl

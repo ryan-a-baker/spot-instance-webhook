@@ -1,0 +1,14 @@
+[
+    {
+      "effect": "NoSchedule",
+      "key": "test",
+      "operator": "Equal",
+      "value": "true"
+    },
+    {
+      "effect": "NoSchedule",
+      "key": "spot",
+      "operator": "Equal",
+      "value": "true"
+    }
+  ]

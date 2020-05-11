@@ -31,41 +31,28 @@ This, you'll want to place in your values file for the `CABundle:` value (minus 
 
 Finally, deploy the chart:
 
-`helm upgrade --install --namespace spot-instance-webhook spot-instance-webhook`
+`helm upgrade --install spot-instance-webhook spot-instance-webhook`
 
 
 # Testing
 
-Here are the scenarios we need to test
+In the "test" folder, there are two shell scripts are are intended to be run on a local minikube deployment.  These tests are perfomed by applying known deployments and comparing the deployment that gets created in kubernetes with the expected results.  
 
-# Place all deployments on spot instances
+It will evaluate the following tests:
 
-## Create new deployment
+Using the Labeled namespace functionality (label-namespace-test.sh):
 
-## Update existing deployment
+1) Ensure that node selector/toleration is added to a newly created deployment in a labeled namespace when there previously were no node selectors/tolerations
+2) Ensure that node selector/toleration is NOT added to a newly created deployment in a unlabeled namespace
+3) Ensure that an update to a deployment in a labeled namespace does not add duplicate node selector/tolerations when mutating
+4) Ensure that a deployment in an excluded namespace is not mutated
+5) Ensure that a deployment with different node selectors/tolerations appends instead of overwrites when mutatating
+6) Ensure that a deployment with a node selector but not a toleration has a toleration added when in a labeled namespace
+7) Ensure that a deployment with a toleration but not a node selector has a node selector added when in a labeled namespace
+8) Ensure that a deployment with a node selector but not a toleration has a toleration added when in a labeled namespace
 
-# Place only label namespaces on spot instances
-# Node selector already exists
-# Different toleration already exists
+Using the "all namespaces" functionality (all-namespace-test.sh):
 
-## Create new deployment in unlabled namespace
-Expected output - no taints or tolerations added
-## Create new deployment in a labeled namespace
-Expected output - taints and tolerations added
-## Create new deployment that already has a taint
-## Create new deployment that already has a toleration
-## Create a new deployment that has both a taint and toleration
-
-## Update existing deployment in an unlabeled namespace
-## Update existing deployment in a labeled namespace
-
-# Sad Path
-
-## Pod is not available
-
-
-
-# Current Issues
-## Pod must be deployed in default namespace
-
+1) Ensure that node selector/toleration is added to a newly created deployment
+1) Ensure that node selector/toleration is NOT added to a newly created deployment when in an excluded namespace
 
