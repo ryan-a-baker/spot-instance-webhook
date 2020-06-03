@@ -37,7 +37,7 @@ If you would rather run all namespaces on spot instances except the ones you exp
 
 # Credit where credit is due
 
-This is webhook was HEAVILY drawn from (Banzia's Cloud example)[https://github.com/banzaicloud/admission-webhook-example], which is drawn from (morvencao)[https://github.com/morvencao/kube-mutating-webhook-tutorial] example.  There pretty much is just scaffolding that remains from those sources, but it served as the base for this work so  thank you to both of those people/groups for leading the way!
+This is webhook was HEAVILY drawn from [Banzia's Cloud example](https://github.com/banzaicloud/admission-webhook-example), which is drawn from [morvencao](https://github.com/morvencao/kube-mutating-webhook-tutorial) example.  There pretty much is just scaffolding that remains from those sources, but it served as the base for this work so  thank you to both of those people/groups for leading the way!
 
 # Deploying
 
