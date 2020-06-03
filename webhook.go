@@ -252,21 +252,13 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 
 // Serve method for webhook server
 func (whsvr *WebhookServer) serve(w http.ResponseWriter, r *http.Request) {
-	glog.Infof("Request: %v", r)
+
 	var body []byte
 	if r.Body != nil {
 		if data, err := ioutil.ReadAll(r.Body); err == nil {
 			body = data
 		}
 	}
-	glog.Infof("Request String 2: %v", string(body))
-	if len(body) == 0 {
-		glog.Error("empty body")
-		http.Error(w, "empty body", http.StatusBadRequest)
-		return
-	}
-	glog.Infof("Request: %v", body)
-	glog.Infof("Request String 3: %v", string(body))
 
 	// verify the content type is accurate
 	contentType := r.Header.Get("Content-Type")
@@ -307,13 +299,11 @@ func (whsvr *WebhookServer) serve(w http.ResponseWriter, r *http.Request) {
 			admissionReview.Response.UID = ar.Request.UID
 		}
 	}
-	glog.Infof("Response: %v", admissionResponse)
 	resp, err := json.Marshal(admissionReview)
 	if err != nil {
 		glog.Errorf("Can't encode response: %v", err)
 		http.Error(w, fmt.Sprintf("could not encode response: %v", err), http.StatusInternalServerError)
 	}
-	glog.Infof("Response: %v", resp)
 	glog.Infof("Ready to write reponse ...")
 	if _, err := w.Write(resp); err != nil {
 		glog.Errorf("Can't write response: %v", err)
