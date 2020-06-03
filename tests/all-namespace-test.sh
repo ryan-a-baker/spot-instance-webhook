@@ -79,7 +79,7 @@ kubectl delete deployment sleep -n default
 kubectl label namespace default spot-deploy-
 
 # Clean up all out testing
-kubectl delete namespace test-unlabeled
+#kubectl delete namespace test-unlabeled
 
 
 

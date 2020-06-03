@@ -1,23 +1,49 @@
 # spot-instance-webhook	
 
-This is HEAVILY drawn from Banzia's Cloud example: https://github.com/banzaicloud/admission-webhook-example	
+This repo provides a mutating webhook for kubernetes which will automatically inject node selectors and tolerations to deployments to allow pods to run on a node tainted as a spot instance.  In order to take advantage of this, your node pools have to have have the taints and labels setup correctly.  
 
-Which is drawn from https://github.com/morvencao/kube-mutating-webhook-tutorial	
+The node selector that is added is:
 
-A mutating web hook for kubernetes that allows spot instances to be scheduled on tainted instances.	
+```
+nodeSelector:
+  spot: "true"
+```
 
-dep ensure -v	
-CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o spot-instance-webhook
+And the toleration that is added is:
+
+```
+tolerations:
+- effect: NoSchedule
+  key: spot
+  operator: Equal
+  value: "true"
+```
+
+The webhook can be configured to mutate deployments based on one of two ways:
+
+## Labeling a namespace
+
+The first scenario is if you don't want every deployment running on spot instances, but maybe you want your less critical environments.  A good use case here would be to ensure development namespaces run on spot instances, but formal testing or production environments continue to run on long lived nodes.
+
+In this mode, the webhook will inspect each deployment and the namespace that it's in.  If the namespace has the `spot-deploy=enabled` label on it, any deployment (and only deployment, not statuefulsets or dameonsets) will have the nodeSelector and tolerations automatically injectet on deployment creation or update.  
+
+If a namespace is updated with the label after the deployment is initially created, the webhook will inject the nodeSelector and toleration anytime the next update is applied to the deployment configuration.
+
+In order to configure the webhook in this mode, the `mutateAllNamespaces` config value in the Helm chart should be set to false.
+
+## Any Deployment
+
+If you would rather run all namespaces on spot instances except the ones you explicitily define, the `mutateAllNamespaces` flag set to true will mutate any deployment regardless of the namespace.  However, you can exclude namespaces with the `namespacesToExclude` helm chart value.  By default, the webhook will exclude the kube-system and kube-public namespaces, and the chart default values will exclude the default and spot-instance-webhook namespaces. 
+
+# Credit where credit is due
+
+This is webhook was HEAVILY drawn from (Banzia's Cloud example)[https://github.com/banzaicloud/admission-webhook-example], which is drawn from (morvencao)[https://github.com/morvencao/kube-mutating-webhook-tutorial] example.  There pretty much is just scaffolding that remains from those sources, but it served as the base for this work so  thank you to both of those people/groups for leading the way!
 
 # Deploying
 
 First, we need to create a namespace for the webhook to be deployed in:
 
 `kubectl create namespace spot-instance-webhook`
-
-Next, let's set our context in our current cluster to the newly created namespace so when the script runs, it creates it all in the right namespace
-
-`kubectl config set-context <context name> --namespace=spot-instance-webhook`
 
 Create a signed cert using the script from the Istio team.  This will create a secret with the private cert in it
 
@@ -27,12 +53,19 @@ Now, get the CA bundle from your current context, so the cert that was signed by
 
 `kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[].cluster.certificate-authority-data}'`
 
-This, you'll want to place in your values file for the `CABundle:` value (minus the %)
+This, you'll want to place in your helm values file for the `CABundle:` value (minus the %)
 
 Finally, deploy the chart:
 
 `helm upgrade --install spot-instance-webhook spot-instance-webhook --namespace spot-instance-webhook`
 
+If you wish - you can make sure the pod for the webhook is running:
+
+`kubectl get pods --namespace spot-instance-webhook`
+
+# Troubleshooting
+
+Sometimes things don't work quite how you would like it to.  If that's the case, I've found it helpful to tail the logs of the spot-instance-webhook pods.  If it doesn't look like the webhook is being called, take a look at the logs of the K8S API server.  Typically, this is because 
 
 # Testing
 
