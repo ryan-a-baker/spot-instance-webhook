@@ -69,7 +69,7 @@ Sometimes things don't work quite how you would like it to.  If that's the case,
 
 # Testing
 
-In the "test" folder, there are two shell scripts are are intended to be run on a local minikube deployment.  These tests are perfomed by applying known deployments and comparing the deployment that gets created in kubernetes with the expected results.  
+In the "test" folder, there are two shell scripts are are intended to be run on a local minikube deployment.  These tests are perfomed by applying known deployments and comparing the deployment that gets created in kubernetes with the expected results.  Please note, these tests can be someone destructive, so please be sure to run them only in a dev environment or minikube.
 
 It will evaluate the following tests:
 
