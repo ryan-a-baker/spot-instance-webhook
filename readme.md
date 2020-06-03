@@ -49,9 +49,10 @@ Create a signed cert using the script from the Istio team.  This will create a s
 
 `namespace=spot-instance-webhook ./webhook-create-signed-cert.sh`
 
-Now, get the CA bundle from your current context, so the cert that was signed by the K8S api can be trusted
+Now, get the CA bundle from your current context, so the cert that was signed by the K8S api can be trusted.  This varies depending on the K8S provider you are using:
 
-`kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[].cluster.certificate-authority-data}'`
+Minikube: `kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[].cluster.certificate-authority-data}'`
+EKS: `aws eks describe-cluster --name <cluster-name> --query cluster.certificateAuthority.data --region <region>`
 
 This, you'll want to place in your helm values file for the `CABundle:` value (minus the %)
 
