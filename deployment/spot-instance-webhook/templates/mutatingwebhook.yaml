@@ -9,7 +9,7 @@ webhooks:
     clientConfig:
       service:
         name: spot-instance-webhook
-        namespace: default
+        namespace: spot-instance-webhook
         path: "/mutate"
       caBundle: {{ .Values.CABundle }}
     rules:
